@@ -97,7 +97,7 @@ class AppScreen(Drawable):
 			getattr(self,event_type)(*args)
 		for layer in self.layers:
 			if event_type in dir(layer):
-				getattr(layer,event_type)(self,*args)
+				getattr(layer,event_type)(*args)
 
 	#
 	def draw(self):
@@ -114,6 +114,7 @@ class AppScreen(Drawable):
 	def addLayer(self,layer):
 		self.layers.append(layer)
 		layer.screen = self
+		layer.resize(self.width,self.height)
 
 	# Вызывается при уничтожении экрана
 	def exit(self):
@@ -354,6 +355,177 @@ class StaticBackgroundLauer(Layer):
 	def draw(self):
 		self.texture.blit(x=self.tx,y=self.ty,width=self.tw,height=self.th)
 
+### Слой, рисующий элемент гуя.
+class GUIItemLayer(Layer):
+	# offset_* - отступ элемента по оси.
+	#  Если 0 - элемент распологается по центру.
+	#  Если < 0 - отступ от края с большей координатой.
+	def __init__(self,offset_x,offset_y,width,height):
+		Layer.__init__(self)
+
+		self.offset_x = offset_x
+		self.offset_y = offset_y
+
+		self.mouse_in = False
+
+		# Прямоугольник (x,y,ширина,высота)
+		self.rect = [0,0,width,height]
+
+		self.on_resize(self.width,self.height)
+
+	# Проверяет, находится ли точка в прямоугольнике элемента
+	def pointInRect(self,x,y):
+		return (x >= self.rect[0]) and (
+				x <= (self.rect[2]+self.rect[0])) and (
+				y >= self.rect[1]) and (
+				y <= (self.rect[3]+self.rect[1]))
+	#
+	def draw(self):
+		glBegin(GL_LINE_LOOP)
+		glVertex2i(self.rect[0],self.rect[1])
+		glVertex2i(self.rect[0]+self.rect[2],self.rect[1])
+		glVertex2i(self.rect[0]+self.rect[2],self.rect[1]+self.rect[3])
+		glVertex2i(self.rect[0],self.rect[1]+self.rect[3])
+		glEnd( )
+
+	#
+	def on_resize(self,width,height):
+		if self.offset_x == 0:
+			self.rect[0] = width // 2
+		elif self.offset_x < 0:
+			self.rect[0] = width + self.offset_x - self.rect[2]
+		else:
+			self.rect[0] = self.offset_x
+
+		if self.offset_y == 0:
+			self.rect[1] = height // 2
+		elif self.offset_y < 0:
+			self.rect[1] = height + self.offset_y - self.rect[3]
+		else:
+			self.rect[1] = self.offset_y
+
+	#
+	def setSize(self,width,height):
+		self.rect[2] = width
+		self.rect[3] = height
+		self.on_resize(self.width,self.height)
+
+	#
+	def on_mouse_motion(self,x,y,dx,dy):
+		ni = self.pointInRect(x,y)
+
+		if self.mouse_in and (not ni):
+			self.on_element_mouse_leave( )
+			self.mouse_in = False
+		elif (not self.mouse_in) and ni:
+			self.on_element_mouse_enter( )
+			self.mouse_in = True
+
+	def on_element_mouse_leave(self):
+		GAME_CONSOLE.write('Mouse leave!')
+
+	def on_element_mouse_enter(self):
+		GAME_CONSOLE.write('Mouse enter!')
+
+### Слой рисующий элемент гуя-картинку
+class GUIImageItemLayer(GUIItemLayer):
+	def __init__(self,offset_x,offset_y,img=None):
+		w,h = (img.width,img.height) if img != None else (1,1)
+		GUIItemLayer.__init__(self,offset_x,offset_y,w,h)
+		self.image = img
+
+	def setImage(self,img):
+		self.image = img
+		self.setSize(img.width,img.height)
+
+	def draw(self):
+		if self.image != None:
+			self.image.blit(x=self.rect[0],y=self.rect[1],width=self.rect[2],height=self.rect[3])
+		GUIItemLayer.draw(self)
+
+### Слой - элемент гуя - кнопка.
+class GUIButtonItemLayer(GUIImageItemLayer):
+	# imgname - имя изображения, содержащего
+	# (снизу вверх) вид кнопки в активном,
+	# наведённом, нажатом и неактивном состоянии.
+	def __init__(self,offset_x,offset_y,imgname):
+		image = pyglet.resource.image(imgname)
+		self.images = (
+			image.get_region(0,0,image.width,image.height // 4).get_texture(),
+			image.get_region(0,(image.height // 4),image.width,image.height // 4).get_texture(),
+			image.get_region(0,(image.height // 4)*2,image.width,image.height // 4).get_texture(),
+			image.get_region(0,(image.height // 4)*3,image.width,image.height // 4).get_texture()
+			)
+		GUIImageItemLayer.__init__(self,offset_x,offset_y,self.images[0])
+		self.mouse_down = False
+		self.enabled = True
+
+	def setStateImage(self,state):
+		self.setImage(self.images[state])
+
+	def on_element_mouse_enter(self):
+		if not self.enabled:
+			return
+		self.setStateImage(1)
+		self.mouse_down = False
+
+	def on_element_mouse_leave(self):
+		if not self.enabled:
+			return
+		self.setStateImage(0)
+		self.mouse_down = False
+
+	def on_mouse_press(self,x,y,button,modifiers):
+		if not self.enabled:
+			return
+		if not self.mouse_in:
+			return
+		self.mouse_down = True
+		self.setStateImage(2)
+
+	def on_mouse_release(self,x,y,button,modifiers):
+		if not self.enabled:
+			return
+		if self.mouse_in and self.mouse_down:
+			self.on_button_click()
+			self.mouse_down = False
+			self.setStateImage(1)
+
+	def enable(self,yes=True):
+		if self.enabled == yes:
+			return
+		self.enabled = yes
+		if yes:
+			self.setStateImage(0)
+		else:
+			self.setStateImage(3)
+
+	def on_button_click(self):
+		GAME_CONSOLE.write('CLICK!')
+
+### Слой рисующий элемент гуя-текст.
+class GUITextItemLayer(GUIItemLayer):
+	def __init__(self,offset_x,offset_y,text = '',font_name='Times New Roman',font_size=36):
+		label = pyglet.text.Label(text,x=0,y=0,font_name=font_name,font_size=font_size)
+		GUIItemLayer.__init__(self,offset_x,offset_y,
+			label.content_width,label.content_height)
+		self.text_label = label
+
+	def draw(self):
+		self.text_label.draw( )
+
+	def setText(self,text):
+		self.text_label.begin_update( )
+		self.text_label.text = text
+		self.text_label.end_update( )
+		self.setSize(label.content_width,label.content_height)
+
+	def on_resize(self,width,height):
+		GUIItemLayer.on_resize(self,width,height)
+		self.text_label.x = self.rect[0]
+		self.text_label.y = self.rect[1]
+
+
 ### Слой, рисующий игровой мир.
 class GameWorldLayer(Layer):
 	def __init__(self,game,camera):
@@ -416,7 +588,7 @@ def PlayMusic(name):
 	#
 	try:
 		MUSIC_SOUND_SOURCES[name] = pyglet.media.load(filename=name,streaming=True)
-	except Exception e:
+	except Exception as e:
 		MUSIC_SOUND_SOURCES[name] = None
 		GAME_CONSOLE.write("Couldn't load sound file: ",name)
 		print e

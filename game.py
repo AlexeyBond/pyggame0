@@ -40,6 +40,8 @@ class GameScreen(AppScreen):
 		self.game.addEntity(ent1)
 
 		self.addLayer(GameWorldLayer(self.game,self.camera))
+		#self.addLayer(GUITextItemLayer(-10,0,text='Hello lol'))
+		self.addLayer(GUIButtonItemLayer(10,0,'rc/128x128btn.png'))
 		GAME_CONSOLE.write('Game screen created.')
 
 	def on_resize(self,width,height):
@@ -52,7 +54,7 @@ class GameScreen(AppScreen):
 
 	def on_key_press(self,key,mod):
 		GAME_CONSOLE.write('SSC:Key down:',KEY.symbol_string(key),'(',key,') [+',KEY.modifiers_string(mod),']')
-		PlayStaticSound('rc/snd/buttonclick.mp3')
+		PlayStaticSound('rc/snd/buttonclick.ogg')
 
 		if key == KEY.UP:
 			self.camera.focus_y += 1
