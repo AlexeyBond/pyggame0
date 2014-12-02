@@ -555,20 +555,27 @@ STATIC_SOUND_SOURCES = {}
 MUSIC_SOUND_SOURCES = {}
 MUSIC_PLAYER = None
 
+# Предзагрузить звук и/или назначить ему псевдоним.
+# Псевдоним можно будет использовать вместо пути к файлу для воспроизведения.
+def PreloadStaticSound(name,alias=None):
+	if name not in STATIC_SOUND_SOURCES:
+		try:
+			STATIC_SOUND_SOURCES[name] = pyglet.media.load(filename=name,streaming=False)
+		except Exception as e:
+			STATIC_SOUND_SOURCES[name] = None
+			GAME_CONSOLE.write("Couldn't load sound file: ",name)
+			print e
+
+	if alias != None:
+		STATIC_SOUND_SOURCES[alias] = STATIC_SOUND_SOURCES[name]
+
 # Проигрывает короткий звук
 def PlayStaticSound(name):
-	if name in STATIC_SOUND_SOURCES:
-		if STATIC_SOUND_SOURCES[name] != None:
-			return STATIC_SOUND_SOURCES[name].play( )
-		else:
-			return None
-	try:
-		STATIC_SOUND_SOURCES[name] = pyglet.media.load(filename=name,streaming=False)
-	except Exception as e:
-		STATIC_SOUND_SOURCES[name] = None
-		GAME_CONSOLE.write("Couldn't load sound file: ",name)
-		print e
-	PlayStaticSound(name)
+	PreloadStaticSound(name)
+	if STATIC_SOUND_SOURCES[name] != None:
+		return STATIC_SOUND_SOURCES[name].play( )
+	else:
+		return None
 
 # Играет музыку
 def PlayMusic(name):
