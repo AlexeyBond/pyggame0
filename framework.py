@@ -36,6 +36,10 @@ class Layer(Drawable):
 		self.visible = True
 		self.screen = None	# Установится при добавлении к экрану.
 
+	# Вызывается при добавлении к экрану
+	def on_add_to_screen(self):
+		pass
+
 ### Абстрактный класс экрана
 class AppScreen(Drawable):
 	### Работа с сокращёнными обозначениями
@@ -114,6 +118,7 @@ class AppScreen(Drawable):
 	def addLayer(self,layer):
 		self.layers.append(layer)
 		layer.screen = self
+		layer.on_add_to_screen()
 		layer.resize(self.width,self.height)
 
 	# Вызывается при уничтожении экрана
@@ -360,18 +365,21 @@ class GUIItemLayer(Layer):
 	# offset_* - отступ элемента по оси.
 	#  Если 0 - элемент распологается по центру.
 	#  Если < 0 - отступ от края с большей координатой.
-	def __init__(self,offset_x,offset_y,width,height):
+	def __init__(self,offset_x,offset_y,width,height,pad_x=0,pad_y=0):
 		Layer.__init__(self)
 
 		self.offset_x = offset_x
 		self.offset_y = offset_y
+
+		self.pad_x = pad_x
+		self.pad_y = pad_y
 
 		self.mouse_in = False
 
 		# Прямоугольник (x,y,ширина,высота)
 		self.rect = [0,0,width,height]
 
-		self.on_resize(self.width,self.height)
+		self.update_rect( )
 
 	# Проверяет, находится ли точка в прямоугольнике элемента
 	def pointInRect(self,x,y):
@@ -381,34 +389,48 @@ class GUIItemLayer(Layer):
 				y <= (self.rect[3]+self.rect[1]))
 	#
 	def draw(self):
-		glBegin(GL_LINE_LOOP)
-		glVertex2i(self.rect[0],self.rect[1])
-		glVertex2i(self.rect[0]+self.rect[2],self.rect[1])
-		glVertex2i(self.rect[0]+self.rect[2],self.rect[1]+self.rect[3])
-		glVertex2i(self.rect[0],self.rect[1]+self.rect[3])
-		glEnd( )
+		if GAME_CONSOLE.visible:
+			glBegin(GL_LINE_LOOP)
+			glVertex2i(self.rect[0],self.rect[1])
+			glVertex2i(self.rect[0]+self.rect[2],self.rect[1])
+			glVertex2i(self.rect[0]+self.rect[2],self.rect[1]+self.rect[3])
+			glVertex2i(self.rect[0],self.rect[1]+self.rect[3])
+			glEnd( )
 
 	#
 	def on_resize(self,width,height):
 		if self.offset_x == 0:
-			self.rect[0] = width // 2
+			self.rect[0] = width // 2 - self.rect[2] // 2
 		elif self.offset_x < 0:
 			self.rect[0] = width + self.offset_x - self.rect[2]
 		else:
 			self.rect[0] = self.offset_x
 
 		if self.offset_y == 0:
-			self.rect[1] = height // 2
+			self.rect[1] = height // 2 - self.rect[3] // 2
 		elif self.offset_y < 0:
 			self.rect[1] = height + self.offset_y - self.rect[3]
 		else:
 			self.rect[1] = self.offset_y
 
+		self.rect[0] += self.pad_x
+		self.rect[1] += self.pad_y
+
+	#
+	def update_rect(self):
+		GUIItemLayer.on_resize(self,self.width,self.height)
+
+	#
+	def move(self,offset_x,offset_y):
+		self.offset_x = offset_x
+		self.offset_y = offset_y
+		self.update_rect( )
+
 	#
 	def setSize(self,width,height):
 		self.rect[2] = width
 		self.rect[3] = height
-		self.on_resize(self.width,self.height)
+		self.update_rect( )
 
 	#
 	def on_mouse_motion(self,x,y,dx,dy):
@@ -443,12 +465,36 @@ class GUIImageItemLayer(GUIItemLayer):
 			self.image.blit(x=self.rect[0],y=self.rect[1],width=self.rect[2],height=self.rect[3])
 		GUIItemLayer.draw(self)
 
+### Слой рисующий элемент гуя-текст.
+class GUITextItemLayer(GUIItemLayer):
+	def __init__(self,offset_x,offset_y,text = '',font_name='Courier New',font_size=36):
+		label = pyglet.text.Label(text,x=0,y=0,font_name=font_name,font_size=font_size)
+		GUIItemLayer.__init__(self,offset_x,offset_y,
+			label.content_width,label.content_height)
+		self.text_label = label
+
+	def draw(self):
+		self.text_label.draw( )
+		GUIItemLayer.draw(self)
+
+	def setText(self,text):
+		self.text_label.begin_update( )
+		self.text_label.text = text
+		self.text_label.end_update( )
+		self.setSize(label.content_width,label.content_height)
+
+	def on_resize(self,width,height):
+		GUIItemLayer.on_resize(self,width,height)
+		self.text_label.x = self.rect[0]
+		self.text_label.y = self.rect[1]
+
 ### Слой - элемент гуя - кнопка.
 class GUIButtonItemLayer(GUIImageItemLayer):
 	# imgname - имя изображения, содержащего
 	# (снизу вверх) вид кнопки в активном,
 	# наведённом, нажатом и неактивном состоянии.
-	def __init__(self,offset_x,offset_y,imgname):
+	# Текст рисуется отдельным слоем.
+	def __init__(self,offset_x,offset_y,imgname,text='Button!'):
 		image = pyglet.resource.image(imgname)
 		self.images = (
 			image.get_region(0,0,image.width,image.height // 4).get_texture(),
@@ -459,9 +505,18 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 		GUIImageItemLayer.__init__(self,offset_x,offset_y,self.images[0])
 		self.mouse_down = False
 		self.enabled = True
+		self.text_item = GUITextItemLayer(offset_x,offset_y,text,font_size=14)
+		self.text_item.pad_y = 6
 
 	def setStateImage(self,state):
 		self.setImage(self.images[state])
+
+	def move(self,x,y):
+		GUIItemLayer.move(self,x,y)
+		self.text_item.move(x,y)
+
+	def on_add_to_screen(self):
+		self.screen.addLayer(self.text_item)
 
 	def on_element_mouse_enter(self):
 		if not self.enabled:
@@ -502,29 +557,6 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 
 	def on_button_click(self):
 		GAME_CONSOLE.write('CLICK!')
-
-### Слой рисующий элемент гуя-текст.
-class GUITextItemLayer(GUIItemLayer):
-	def __init__(self,offset_x,offset_y,text = '',font_name='Times New Roman',font_size=36):
-		label = pyglet.text.Label(text,x=0,y=0,font_name=font_name,font_size=font_size)
-		GUIItemLayer.__init__(self,offset_x,offset_y,
-			label.content_width,label.content_height)
-		self.text_label = label
-
-	def draw(self):
-		self.text_label.draw( )
-
-	def setText(self,text):
-		self.text_label.begin_update( )
-		self.text_label.text = text
-		self.text_label.end_update( )
-		self.setSize(label.content_width,label.content_height)
-
-	def on_resize(self,width,height):
-		GUIItemLayer.on_resize(self,width,height)
-		self.text_label.x = self.rect[0]
-		self.text_label.y = self.rect[1]
-
 
 ### Слой, рисующий игровой мир.
 class GameWorldLayer(Layer):

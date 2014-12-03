@@ -41,7 +41,7 @@ class GameScreen(AppScreen):
 
 		self.addLayer(GameWorldLayer(self.game,self.camera))
 		#self.addLayer(GUITextItemLayer(-10,0,text='Hello lol'))
-		self.addLayer(GUIButtonItemLayer(10,0,'rc/128x128btn.png'))
+		self.addLayer(GUIButtonItemLayer(0,0,'rc/128x128btn.png'))
 		GAME_CONSOLE.write('Game screen created.')
 
 		PreloadStaticSound('rc/snd/buttonclick.ogg','CLICK')
