@@ -494,7 +494,7 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 	# (снизу вверх) вид кнопки в активном,
 	# наведённом, нажатом и неактивном состоянии.
 	# Текст рисуется отдельным слоем.
-	def __init__(self,offset_x,offset_y,imgname,text='Button!'):
+	def __init__(self,offset_x,offset_y,imgname,text='Button!',pad_x=0,pad_y=0):
 		image = pyglet.resource.image(imgname)
 		self.images = (
 			image.get_region(0,0,image.width,image.height // 4).get_texture(),
@@ -502,11 +502,11 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 			image.get_region(0,(image.height // 4)*2,image.width,image.height // 4).get_texture(),
 			image.get_region(0,(image.height // 4)*3,image.width,image.height // 4).get_texture()
 			)
-		GUIImageItemLayer.__init__(self,offset_x,offset_y,self.images[0])
+		GUIImageItemLayer.__init__(self,offset_x,offset_y,self.images[0],pad_x=pad_x,pad_y=pad_y)
 		self.mouse_down = False
 		self.enabled = True
 		self.text_item = GUITextItemLayer(offset_x,offset_y,text,font_size=14)
-		self.text_item.pad_y = 6
+		self.text_item.pad_y = 6 + self.pad_y
 
 	def setStateImage(self,state):
 		self.setImage(self.images[state])
@@ -836,8 +836,6 @@ class AnimatedGameEntity(GameEntity):
 
 	def spawn(self):
 		self.sprite = self.game.newSprite(self.animlist.default_anim)
-
-
 
 # Камера - определяет, как мы видим мир.
 class Camera:
