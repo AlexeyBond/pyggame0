@@ -66,3 +66,26 @@ class GameScreen(AppScreen):
 			self.camera.focus_x += 1
 		if key == KEY.LEFT:
 			self.camera.focus_x -= 1
+			
+class GravityBox(SpriteGameEntity):
+	boxes = []
+	def __init__(self, sx, sy):
+		SpriteGameEntity.__init__(self, "rc/32x32fgA.png")
+		self.x = sx
+		self.y = sy
+		GravityBox.boxes.append(self)
+	def update(self, dt):
+		dt = dt*20
+		vx = 0
+		vy = 0
+		for ent in GravityBox.boxes:
+			if ent == self:
+				continue
+			dx = ent.x - self.x
+			dy = ent.y - self.y
+			k = 1.0 / math.sqrt(dx*dx + dy*dy)
+			vx += k*dx*dt
+			vy += k*dy*dt
+		self.x += vx
+		self.y += vy
+		self.end_update_coordinates
