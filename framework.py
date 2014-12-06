@@ -451,9 +451,9 @@ class GUIItemLayer(Layer):
 
 ### Слой рисующий элемент гуя-картинку
 class GUIImageItemLayer(GUIItemLayer):
-	def __init__(self,offset_x,offset_y,img=None):
+	def __init__(self,offset_x,offset_y,img=None,pad_x=0,pad_y=0):
 		w,h = (img.width,img.height) if img != None else (1,1)
-		GUIItemLayer.__init__(self,offset_x,offset_y,w,h)
+		GUIItemLayer.__init__(self,offset_x,offset_y,w,h,pad_x=pad_x,pad_y=pad_y)
 		self.image = img
 
 	def setImage(self,img):
@@ -464,6 +464,33 @@ class GUIImageItemLayer(GUIItemLayer):
 		if self.image != None:
 			self.image.blit(x=self.rect[0],y=self.rect[1],width=self.rect[2],height=self.rect[3])
 		GUIItemLayer.draw(self)
+
+###
+class GUIVerticalProgressBarItemLayer(GUIItemLayer):
+	def __init__(self,bar_offset=5,**kwargs):
+		GUIItemLayer.__init__(self,**kwargs)
+		self.status = 0.5
+		self.bar_offset = bar_offset
+
+	def draw(self):
+		pbheight = self.status * (self.rect[3] - self.rect[1] - 2*self.bar_offset)
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(1.0,1.0,1.0)
+		glVertex2f(self.rect[0],self.rect[1])
+		glVertex2f(self.rect[0]+self.rect[2],self.rect[1])
+		glVertex2f(self.rect[0]+self.rect[2],self.rect[1]+self.rect[3])
+		glVertex2f(self.rect[0],self.rect[1]+self.rect[3])
+		glEnd()
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(1.0,0.5,0.5)
+		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+self.bar_offset)
+		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+self.bar_offset)
+		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
+		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
+		glEnd()
+		glColor3f(1.0,1.0,1.0)
+		GUIItemLayer.draw(self)
+
 
 ### Слой рисующий элемент гуя-текст.
 class GUITextItemLayer(GUIItemLayer):
