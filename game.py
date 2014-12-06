@@ -100,6 +100,8 @@ class GravityBox(SpriteGameEntity):
 class Apple(SpriteGameEntity):
 	apple_image_1 = LoadTexture('rc/apple1.png',anchor='center')
 	apple_image_2 = LoadTexture('rc/apple2.png',anchor='center')
+	inactive_list = []
+	active_list = []
 	def __init__(self):
 		SpriteGameEntity.__init__(self,sprite_image=Apple.apple_image_1)
 		self.radius = 32
@@ -117,13 +119,40 @@ class Apple(SpriteGameEntity):
 		self.x,self.y = x,y
 		self.sprite.visible = True
 		self.end_update_coordinates( )
+		Apple.active_list.append(self)
+		Apple.inactive_list.remove(self)
 
 	def reset(self):
 		self.sprite.visible = False
 		self.eaten = False
 		self.sprite.image = Apple.apple_image_1
+		Apple.inactive_list.append(self)
+		if self in Apple.active_list:
+			Apple.active_list.remove(self)
 
 	def update(self,dt):
 		self.scale = 1.0 + 0.2 * math.sin(self.game.time)
 		self.end_update_coordinates( )
 
+class ApManGame(Game):
+	WORLD_LEFT = -200
+	WORLD_RIGHT = 200
+	WORLD_TOP = 200
+	WORLD_BOTTOM = -200
+	SCORE_PER_APPLE = 10
+	MAX_SCORE = 10000000
+	def __init__(self,progress_bar):
+		Game.__init__(self)
+		self.world_space = TorrWrapWorldSpace(
+			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_TOP,ApManGame.WORLD_BOTTOM)
+		self.score = 0
+		self.progress_bar = progress_bar
+
+	def on_apple_eat(self):
+		self.score += SCORE_PER_APPLE
+		self.update_progress_bar( )
+
+	def update_progress_bar(self):
+		self.progress_bar.status = self.score / ApManGame.MAX_SCORE
+
+	
