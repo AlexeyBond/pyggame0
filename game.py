@@ -134,6 +134,9 @@ class Apple(SpriteGameEntity):
 		self.scale = 1.0 + 0.2 * math.sin(self.game.time)
 		self.end_update_coordinates( )
 
+	def on_collision(self,other,nx,ny):
+		pass
+
 class ApManGame(Game):
 	WORLD_LEFT = -200
 	WORLD_RIGHT = 200
@@ -141,18 +144,41 @@ class ApManGame(Game):
 	WORLD_BOTTOM = -200
 	SCORE_PER_APPLE = 10
 	MAX_SCORE = 10000000
-	def __init__(self,progress_bar):
+	def __init__(self,progress_bar,text_bar):
 		Game.__init__(self)
 		self.world_space = TorrWrapWorldSpace(
 			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_TOP,ApManGame.WORLD_BOTTOM)
 		self.score = 0
 		self.progress_bar = progress_bar
+		self.text_bar = text_bar
 
 	def on_apple_eat(self):
 		self.score += SCORE_PER_APPLE
 		self.update_progress_bar( )
 
 	def update_progress_bar(self):
-		self.progress_bar.status = self.score / ApManGame.MAX_SCORE
+		self.progress_bar.status = math.log( math.e * self.score / ApManGame.MAX_SCORE )
+		self.text_bar.setText('%d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
 
-	
+	def update(self,text_bardt):
+		Game.update(self,dt)
+		for ent in self.entities:
+			ent.collision_checked = not ent.sprite.visible
+
+		for ent in self.entities:
+			if ent.collision_checked:
+				continue
+			x1,y1 = ent.x, ent.y
+
+			for ent2 in self.entities:
+				if ent2.collision_checked:
+					continue
+				x2,y2 = ent2.x,ent2.y
+				dx,dy = x2-x1,y2-y1
+				dist = math.sqrt(dx*dx + dy*dy)
+				if dist <= (ent.radius + ent2.radius):
+					dx /= dist
+					dy /= dist
+					ent.on_collision(ent2,dx,dy)
+					ent2.on_collision(ent,-dx,-dy)
+			ent.collision_checked = True
