@@ -31,25 +31,23 @@ class GameScreen(AppScreen):
 	def __init__(self):
 		AppScreen.__init__(self)
 
-		self.game = Game( )
+		self.game = ApManGame(GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30),\
+		GUITextItemLayer(offset_x=-50,offset_y=-20,text = 'BOCHAN',font_name='Courier New',font_size=36))
 		self.game.unpause( )
 		self.camera = Camera( )
+		self.camera.scale *= 0.1
 
 		# ent1 = SpriteGameEntity()
-		ent1 = AnimatedGameEntity(anilist)
+		ent1 = Worm(100,100,'rc/32x32fgA.png',1)
 		ent1.scale = 10
 		self.game.addEntity(ent1)
 
 		self.addLayer(GameWorldLayer(self.game,self.camera))
 		#self.addLayer(GUITextItemLayer(-10,0,text='Hello lol'))
-		self.addLayer(GUIButtonItemLayer(0,0,'rc/128x128btn.png'))
+		# self.addLayer(GUIButtonItemLayer(0,0,'rc/128x128btn.png'))
 		GAME_CONSOLE.write('Game screen created.')
 
 		PreloadStaticSound('rc/snd/buttonclick.ogg','CLICK')
-
-		self.pbar = GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30)
-
-		self.addLayer(self.pbar)
 
 	def on_resize(self,width,height):
 		AppScreen.on_resize(self,width,height)
@@ -58,8 +56,6 @@ class GameScreen(AppScreen):
 
 	def on_mouse_scroll(self,x,y,sx,sy):
 		self.camera.scale *= 2 ** (sy*0.02)
-
-		self.pbar.status *= 2 ** (sy*0.02)
 
 	def on_key_press(self,key,mod):
 		GAME_CONSOLE.write('SSC:Key down:',KEY.symbol_string(key),'(',key,') [+',KEY.modifiers_string(mod),']')
@@ -81,26 +77,27 @@ class Worm(SpriteGameEntity):
 		self.id = id
 		self.x = sx
 		self.y = sy
-		self.vx = 1
-		self.vy = 0
-		self.lastTurn = 0
+		self.vx = 1.0
+		self.vy = 0.0
 		self.angle = 0
 		self.angVelocity = 0
+		self.timer = 1
 		#!!!подумать как ставить радиус
 		self.radius = 1
+		self.rAngle()
 
 	def update(self, dt):
-		lastTurn += dt
-		if lastTurn > 1000:
-			self.turn()
-			lastTurn = 0
-		for ent in self.game.entities:
-			#проверка на себя и невидимых сущностей
-			if ent == self or ent.sprite.visiable:
-				continue
-			#проверка столкновения
-			if self.distance(ent) < 10:
-				self.collide(ent)
+		self.timer -= dt
+		k=200
+		if self.timer <= 0:
+			print'TURN'
+			self.rAngle()
+		self.affectAngleVelocity(dt)	
+		self.x += self.vx*dt*k
+		self.y += self.vy*dt*k
+		self.end_update_coordinates()
+		#print 'vx,dt:',self.vx,dt
+		#print 'x,y',self.x, self.y
 
 	def velocity(self):
 		return math.sqrt(self.vx*self.vx + self.vy*self.vY)
@@ -109,16 +106,34 @@ class Worm(SpriteGameEntity):
 		self.vx = k*self.vx
 		self.vy = k*self.vy
 
-	def turn(self, angle = 0):
-		if angle <= 0:
-			angle = random.randint(-15,15)
-			angVelocity = random.randint(0,angle)
-			angleRad = angle / 180.0 * math.pi
-			angVelocityRad = angVelocity / 180.0 * math.pi
+	def rAngle(self):
+		#нормальное распределение М[],сигма
+		self.angVelocity = (random.normalvariate(0,40)) 
+		print self.angVelocity
+		self.angVelocityRad = self.angVelocity / 180 * math.pi
+		self.timer = random.random()*3+0.5
+
+	def affectAngleVelocity(self, dt):
+		dr = self.angVelocity * dt
+		self.rotation += -dr
+		drr = (dr / 180) * math.pi
 		self.vx, self.vy =\
-		self.vx * math.cos(angVelocityRad) - self.vy * math.sin(angVelocityRad),\
-		self.vx * math.sin(angVelocityRad) + self.vy * math.cos(angVelocityRad)
-		angle -= angVelocity
+		self.vx * math.cos(drr) - self.vy * math.sin(drr),\
+		self.vx * math.sin(drr) + self.vy * math.cos(drr)
+
+
+	def turn(self, angle = 0):
+		if self.angle <= 0:
+			self.angle = random.randint(-15,15)
+			self.angVelocity = random.randint(0,angle)
+			self.angleRad = angle / 180.0 * math.pi
+			self.angVelocityRad = self.angVelocity / 180.0 * math.pi
+		self.vx, self.vy =\
+		self.vx * math.cos(self.angVelocityRad) - self.vy * math.sin(self.angVelocityRad),\
+		self.vx * math.sin(self.angVelocityRad) + self.vy * math.cos(self.angVelocityRad)
+		self.angle -= angVelocity
+		if self.angle <= 0:
+			self.lastTurn = 0
 		#self.sprite.rotate(angVelocity)
  
 	#возвращает расстояние от текущей сущности до указанной
@@ -128,16 +143,11 @@ class Worm(SpriteGameEntity):
 		return math.sqrt(dx*dx + dy*dy)-entity.radius
 
 	#действие столкновения
-	def collide(self, entity):
+	def on_collision(self, ent, dx, dy):
 		if entity.a.__class__.__name__ == 'Apple':
-			#ent.eaten method(self)
+			ent.eat(self)
 			self.eat()
 		elif entity.a.__class__.__name__ == 'Worm':
-			dx = abs(entity.x - self.x)
-			dy = abs(entity.y - self.y)
-			dl = math.sqrt(dx*dx + dy*dy)
-			dx /= dl
-			dy /= dl
 			#скалярное проиведение
 			scalarMul = self.vx*ent.vx + self.vy*ent.vy
 			self.vx = self.vx - 2 * dx * scalarMul
@@ -193,16 +203,16 @@ class Apple(SpriteGameEntity):
 		pass
 
 class ApManGame(Game):
-	WORLD_LEFT = -200
-	WORLD_RIGHT = 200
-	WORLD_TOP = 200
-	WORLD_BOTTOM = -200
+	WORLD_LEFT = -1320
+	WORLD_RIGHT = 1320
+	WORLD_TOP = 1240
+	WORLD_BOTTOM = -1240
 	SCORE_PER_APPLE = 10
 	MAX_SCORE = 10000000
 	def __init__(self,progress_bar,text_bar):
 		Game.__init__(self)
 		self.world_space = TorrWrapWorldSpace(
-			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_TOP,ApManGame.WORLD_BOTTOM)
+			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_BOTTOM,ApManGame.WORLD_TOP)
 		self.score = 0
 		self.progress_bar = progress_bar
 		self.text_bar = text_bar
@@ -215,7 +225,7 @@ class ApManGame(Game):
 		self.progress_bar.status = math.log( math.e * self.score / ApManGame.MAX_SCORE )
 		self.text_bar.setText('%d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
 
-	def update(self,text_bardt):
+	def update(self,dt):
 		Game.update(self,dt)
 		for ent in self.entities:
 			ent.collision_checked = not ent.sprite.visible
@@ -226,7 +236,7 @@ class ApManGame(Game):
 			x1,y1 = ent.x, ent.y
 
 			for ent2 in self.entities:
-				if ent2.collision_checked:
+				if ent2.collision_checked or ent2 == ent:
 					continue
 				x2,y2 = ent2.x,ent2.y
 				dx,dy = x2-x1,y2-y1

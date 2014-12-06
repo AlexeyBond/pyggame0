@@ -754,6 +754,7 @@ class TorrWrapWorldSpace:
 
 		while y > self.top:
 			y -= self.top - self.bottom
+		return x,y
 
 # Класс, описывающий пространство отображения игрового мира.
 # Можно изменить для отображения зацикленного пространства
