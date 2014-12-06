@@ -508,6 +508,8 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 		self.text_item = GUITextItemLayer(offset_x,offset_y,text,font_size=14)
 		self.text_item.pad_y = 6 + self.pad_y
 
+		self.on_click_lambda = None
+
 	def setStateImage(self,state):
 		self.setImage(self.images[state])
 
@@ -556,7 +558,10 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 			self.setStateImage(3)
 
 	def on_button_click(self):
-		GAME_CONSOLE.write('CLICK!')
+		if self.on_click_lambda != None:
+			self.on_click_lambda( )
+		else:
+			GAME_CONSOLE.write('CLICK!')
 
 ### Слой, рисующий игровой мир.
 class GameWorldLayer(Layer):
