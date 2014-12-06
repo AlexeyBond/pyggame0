@@ -815,14 +815,16 @@ class GameEntity:
 # Простая сущность, рисуемая как спрайт
 # без анимации
 class SpriteGameEntity(GameEntity):
-	def __init__(self,sprite_name='rc/64x64fg.png'):
+	def __init__(self,sprite_name='rc/64x64fg.png',sprite_image=None):
 		GameEntity.__init__(self)
 
 		self.image_name = sprite_name
+		self.texture = None if sprite_image == None else sprite_image.get_texture( )
 
 	def spawn(self):
 		GameEntity.spawn(self)
-		self.texture = LoadTexture(self.image_name,anchor='center')
+		if self.texture == None:
+			self.texture = LoadTexture(self.image_name,anchor='center')
 		self.sprite = self.game.newSprite(self.texture)
 
 	def update(self,dt):

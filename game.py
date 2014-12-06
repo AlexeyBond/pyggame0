@@ -46,6 +46,10 @@ class GameScreen(AppScreen):
 
 		PreloadStaticSound('rc/snd/buttonclick.ogg','CLICK')
 
+		self.pbar = GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30)
+
+		self.addLayer(self.pbar)
+
 	def on_resize(self,width,height):
 		AppScreen.on_resize(self,width,height)
 
@@ -53,6 +57,8 @@ class GameScreen(AppScreen):
 
 	def on_mouse_scroll(self,x,y,sx,sy):
 		self.camera.scale *= 2 ** (sy*0.02)
+
+		self.pbar.status *= 2 ** (sy*0.02)
 
 	def on_key_press(self,key,mod):
 		GAME_CONSOLE.write('SSC:Key down:',KEY.symbol_string(key),'(',key,') [+',KEY.modifiers_string(mod),']')
@@ -89,3 +95,35 @@ class GravityBox(SpriteGameEntity):
 		self.x += vx
 		self.y += vy
 		self.end_update_coordinates
+
+
+class Apple(SpriteGameEntity):
+	apple_image_1 = LoadTexture('rc/apple1.png',anchor='center')
+	apple_image_2 = LoadTexture('rc/apple2.png',anchor='center')
+	def __init__(self):
+		SpriteGameEntity.__init__(self,sprite_image=Apple.apple_image_1)
+		self.radius = 32
+		self.reset( )
+
+	def eat(self,worm):
+		if self.eaten and worm.id == 2:
+			self.game.on_apple_eat( )
+			self.reset( ) 
+		elif worm.id == 1 and not self.eaten:
+			self.eaten = True
+			self.sprite.image = Apple.apple_image_2
+
+	def put(self,x,y):
+		self.x,self.y = x,y
+		self.sprite.visible = True
+		self.end_update_coordinates( )
+
+	def reset(self):
+		self.sprite.visible = False
+		self.eaten = False
+		self.sprite.image = Apple.apple_image_1
+
+	def update(self,dt):
+		self.scale = 1.0 + 0.2 * math.sin(self.game.time)
+		self.end_update_coordinates( )
+
