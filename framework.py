@@ -707,6 +707,27 @@ class EuclidianWorldSpace:
 	def translate_point(self,x,y):
 		return x,y
 
+# 
+class TorrWrapWorldSpace:
+	def __init__(self,left,right,bottom,top):
+		self.top = top
+		self.left = left
+		self.right = right
+		self.bottom = bottom
+
+	def translate_point(self,x,y):
+		while x < self.left:
+			x += self.right - self.left
+
+		while x > self.right:
+			x -= self.right - self.left
+
+		while y < self.bottom:
+			y += self.top - self.bottom
+
+		while y > self.top:
+			y -= self.top - self.bottom
+
 # Класс, описывающий пространство отображения игрового мира.
 # Можно изменить для отображения зацикленного пространства
 # так, чтобы горизонтальные линии отображались в концентричесские
