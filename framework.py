@@ -488,8 +488,8 @@ class GUIVerticalProgressBarItemLayer(GUIItemLayer):
 		glColor3f(1.0,0.5,0.5)
 		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+self.bar_offset)
 		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+self.bar_offset)
-		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
-		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
+		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+pbheight+self.bar_offset)
+		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+pbheight+self.bar_offset)
 		glEnd()
 		glColor3f(1.0,1.0,1.0)
 		GUIItemLayer.draw(self)
@@ -511,7 +511,7 @@ class GUITextItemLayer(GUIItemLayer):
 		self.text_label.begin_update( )
 		self.text_label.text = text
 		self.text_label.end_update( )
-		self.setSize(label.content_width,label.content_height)
+		self.setSize(self.text_label.content_width,self.text_label.content_height)
 
 	def on_resize(self,width,height):
 		GUIItemLayer.on_resize(self,width,height)
@@ -758,6 +758,14 @@ class TorrWrapWorldSpace:
 		while y > self.top:
 			y -= self.top - self.bottom
 		return x,y
+
+	def debug_draw(self):
+		glBegin(GL_LINE_LOOP)
+		glVertex2i(self.right,self.bottom)
+		glVertex2i(self.left,self.bottom)
+		glVertex2i(self.left,self.top)
+		glVertex2i(self.right,self.top)
+		glEnd( )
 
 # Класс, описывающий пространство отображения игрового мира.
 # Можно изменить для отображения зацикленного пространства
