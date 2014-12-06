@@ -278,6 +278,9 @@ def ApplyTextureAnchor(texture,anchor='default'):
 	if anchor == 'center':
 		texture.anchor_x = texture.width // 2
 		texture.anchor_y = texture.height // 2
+	elif type(anchor) is type((0,)):
+		texture.anchor_x = anchor[0]
+		texture.anchor_y = anchor[1]
 
 ### Загружает текстуру.
 def LoadTexture(name,anchor='default'):
