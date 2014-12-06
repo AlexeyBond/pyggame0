@@ -47,6 +47,10 @@ class GameScreen(AppScreen):
 
 		PreloadStaticSound('rc/snd/buttonclick.ogg','CLICK')
 
+		self.pbar = GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30)
+
+		self.addLayer(self.pbar)
+
 	def on_resize(self,width,height):
 		AppScreen.on_resize(self,width,height)
 
@@ -54,6 +58,8 @@ class GameScreen(AppScreen):
 
 	def on_mouse_scroll(self,x,y,sx,sy):
 		self.camera.scale *= 2 ** (sy*0.02)
+
+		self.pbar.status *= 2 ** (sy*0.02)
 
 	def on_key_press(self,key,mod):
 		GAME_CONSOLE.write('SSC:Key down:',KEY.symbol_string(key),'(',key,') [+',KEY.modifiers_string(mod),']')
@@ -67,6 +73,7 @@ class GameScreen(AppScreen):
 			self.camera.focus_x += 1
 		if key == KEY.LEFT:
 			self.camera.focus_x -= 1
+
 #один класс на двух червей
 class Worm(SpriteGameEntity):
 	def __init__(self,sx,sy,sprite,id):
@@ -114,8 +121,6 @@ class Worm(SpriteGameEntity):
 		angle -= angVelocity
 		#self.sprite.rotate(angVelocity)
  
-
-
 	#возвращает расстояние от текущей сущности до указанной
 	def distance(self, entity):
 		dx = ent.x - self.x
@@ -146,3 +151,89 @@ class Worm(SpriteGameEntity):
 		#анимка, звук поедания яблока или надо будет переопределить для каждого червя
 		pass
 
+
+class Apple(SpriteGameEntity):
+	apple_image_1 = LoadTexture('rc/apple1.png',anchor='center')
+	apple_image_2 = LoadTexture('rc/apple2.png',anchor='center')
+	inactive_list = []
+	active_list = []
+	def __init__(self):
+		SpriteGameEntity.__init__(self,sprite_image=Apple.apple_image_1)
+		self.radius = 32
+		self.reset( )
+
+	def eat(self,worm):
+		if self.eaten and worm.id == 2:
+			self.game.on_apple_eat( )
+			self.reset( ) 
+		elif worm.id == 1 and not self.eaten:
+			self.eaten = True
+			self.sprite.image = Apple.apple_image_2
+
+	def put(self,x,y):
+		self.x,self.y = x,y
+		self.sprite.visible = True
+		self.end_update_coordinates( )
+		Apple.active_list.append(self)
+		Apple.inactive_list.remove(self)
+
+	def reset(self):
+		self.sprite.visible = False
+		self.eaten = False
+		self.sprite.image = Apple.apple_image_1
+		Apple.inactive_list.append(self)
+		if self in Apple.active_list:
+			Apple.active_list.remove(self)
+
+	def update(self,dt):
+		self.scale = 1.0 + 0.2 * math.sin(self.game.time)
+		self.end_update_coordinates( )
+
+	def on_collision(self,other,nx,ny):
+		pass
+
+class ApManGame(Game):
+	WORLD_LEFT = -200
+	WORLD_RIGHT = 200
+	WORLD_TOP = 200
+	WORLD_BOTTOM = -200
+	SCORE_PER_APPLE = 10
+	MAX_SCORE = 10000000
+	def __init__(self,progress_bar,text_bar):
+		Game.__init__(self)
+		self.world_space = TorrWrapWorldSpace(
+			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_TOP,ApManGame.WORLD_BOTTOM)
+		self.score = 0
+		self.progress_bar = progress_bar
+		self.text_bar = text_bar
+
+	def on_apple_eat(self):
+		self.score += SCORE_PER_APPLE
+		self.update_progress_bar( )
+
+	def update_progress_bar(self):
+		self.progress_bar.status = math.log( math.e * self.score / ApManGame.MAX_SCORE )
+		self.text_bar.setText('%d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
+
+	def update(self,text_bardt):
+		Game.update(self,dt)
+		for ent in self.entities:
+			ent.collision_checked = not ent.sprite.visible
+
+		for ent in self.entities:
+			if ent.collision_checked:
+				continue
+			x1,y1 = ent.x, ent.y
+
+			for ent2 in self.entities:
+				if ent2.collision_checked:
+					continue
+				x2,y2 = ent2.x,ent2.y
+				dx,dy = x2-x1,y2-y1
+				dist = math.sqrt(dx*dx + dy*dy)
+				if dist <= (ent.radius + ent2.radius):
+					dx /= dist
+					dy /= dist
+					ent.on_collision(ent2,dx,dy)
+					ent2.on_collision(ent,-dx,-dy)
+			ent.collision_checked = True

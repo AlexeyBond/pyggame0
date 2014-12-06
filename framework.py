@@ -451,9 +451,9 @@ class GUIItemLayer(Layer):
 
 ### Слой рисующий элемент гуя-картинку
 class GUIImageItemLayer(GUIItemLayer):
-	def __init__(self,offset_x,offset_y,img=None):
+	def __init__(self,offset_x,offset_y,img=None,pad_x=0,pad_y=0):
 		w,h = (img.width,img.height) if img != None else (1,1)
-		GUIItemLayer.__init__(self,offset_x,offset_y,w,h)
+		GUIItemLayer.__init__(self,offset_x,offset_y,w,h,pad_x=pad_x,pad_y=pad_y)
 		self.image = img
 
 	def setImage(self,img):
@@ -464,6 +464,33 @@ class GUIImageItemLayer(GUIItemLayer):
 		if self.image != None:
 			self.image.blit(x=self.rect[0],y=self.rect[1],width=self.rect[2],height=self.rect[3])
 		GUIItemLayer.draw(self)
+
+###
+class GUIVerticalProgressBarItemLayer(GUIItemLayer):
+	def __init__(self,bar_offset=5,**kwargs):
+		GUIItemLayer.__init__(self,**kwargs)
+		self.status = 0.5
+		self.bar_offset = bar_offset
+
+	def draw(self):
+		pbheight = self.status * (self.rect[3] - self.rect[1] - 2*self.bar_offset)
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(1.0,1.0,1.0)
+		glVertex2f(self.rect[0],self.rect[1])
+		glVertex2f(self.rect[0]+self.rect[2],self.rect[1])
+		glVertex2f(self.rect[0]+self.rect[2],self.rect[1]+self.rect[3])
+		glVertex2f(self.rect[0],self.rect[1]+self.rect[3])
+		glEnd()
+		glBegin(GL_TRIANGLE_FAN)
+		glColor3f(1.0,0.5,0.5)
+		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+self.bar_offset)
+		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+self.bar_offset)
+		glVertex2f(self.rect[0]+self.rect[2]-self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
+		glVertex2f(self.rect[0]+self.bar_offset,self.rect[1]+pbheight-self.bar_offset)
+		glEnd()
+		glColor3f(1.0,1.0,1.0)
+		GUIItemLayer.draw(self)
+
 
 ### Слой рисующий элемент гуя-текст.
 class GUITextItemLayer(GUIItemLayer):
@@ -507,6 +534,8 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 		self.enabled = True
 		self.text_item = GUITextItemLayer(offset_x,offset_y,text,font_size=14)
 		self.text_item.pad_y = 6 + self.pad_y
+
+		self.on_click_lambda = None
 
 	def setStateImage(self,state):
 		self.setImage(self.images[state])
@@ -556,7 +585,10 @@ class GUIButtonItemLayer(GUIImageItemLayer):
 			self.setStateImage(3)
 
 	def on_button_click(self):
-		GAME_CONSOLE.write('CLICK!')
+		if self.on_click_lambda != None:
+			self.on_click_lambda( )
+		else:
+			GAME_CONSOLE.write('CLICK!')
 
 ### Слой, рисующий игровой мир.
 class GameWorldLayer(Layer):
@@ -702,6 +734,27 @@ class EuclidianWorldSpace:
 	def translate_point(self,x,y):
 		return x,y
 
+# 
+class TorrWrapWorldSpace:
+	def __init__(self,left,right,bottom,top):
+		self.top = top
+		self.left = left
+		self.right = right
+		self.bottom = bottom
+
+	def translate_point(self,x,y):
+		while x < self.left:
+			x += self.right - self.left
+
+		while x > self.right:
+			x -= self.right - self.left
+
+		while y < self.bottom:
+			y += self.top - self.bottom
+
+		while y > self.top:
+			y -= self.top - self.bottom
+
 # Класс, описывающий пространство отображения игрового мира.
 # Можно изменить для отображения зацикленного пространства
 # так, чтобы горизонтальные линии отображались в концентричесские
@@ -762,14 +815,16 @@ class GameEntity:
 # Простая сущность, рисуемая как спрайт
 # без анимации
 class SpriteGameEntity(GameEntity):
-	def __init__(self,sprite_name='rc/64x64fg.png'):
+	def __init__(self,sprite_name='rc/64x64fg.png',sprite_image=None):
 		GameEntity.__init__(self)
 
 		self.image_name = sprite_name
+		self.texture = None if sprite_image == None else sprite_image.get_texture( )
 
 	def spawn(self):
 		GameEntity.spawn(self)
-		self.texture = LoadTexture(self.image_name,anchor='center')
+		if self.texture == None:
+			self.texture = LoadTexture(self.image_name,anchor='center')
 		self.sprite = self.game.newSprite(self.texture)
 
 	def update(self,dt):
