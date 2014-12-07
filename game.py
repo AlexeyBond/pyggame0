@@ -50,6 +50,12 @@ class GameScreen(AppScreen):
 
 		self.camera.set_size(width,height)
 
+		ws = float(width) / float(ApManGame.WORLD_WIDTH)
+		hs = float(height) / float(ApManGame.WORLD_HEIGHT)
+		cs = min(ws,hs)
+		GAME_CONSOLE.write('Camera zoom = ',cs,'(',ws,',',hs,')')
+		self.camera.scale = cs
+
 	def on_mouse_scroll(self,x,y,sx,sy):
 		self.camera.scale *= 2 ** (sy*0.02)
 
@@ -248,6 +254,8 @@ class ApManGame(Game):
 	WORLD_BOTTOM = -400
 	SCORE_PER_APPLE = 10
 	MAX_SCORE = 10000000
+	WORLD_WIDTH = WORLD_RIGHT - WORLD_LEFT
+	WORLD_HEIGHT = WORLD_TOP - WORLD_BOTTOM
 	def __init__(self,progress_bar,text_bar):
 		Game.__init__(self)
 		self.world_space = TorrWrapWorldSpace(
