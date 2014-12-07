@@ -97,16 +97,16 @@ class WormTail(AnimatedGameEntity):
 class Worm(AnimatedGameEntity):
 	ANIMATION_LIST = AnimationList({
 			2:[
-				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*0,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*1,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*2,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*3,0,96,96)}
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(22,58),'rect':(96*0,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(22,58),'rect':(96*1,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(22,58),'rect':(96*2,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(22,58),'rect':(96*3,0,96,96)}
 			],
 			1:[
-				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*0,0,96,96)},
-				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*1,0,96,96)},
-				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*2,0,96,96)},
-				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*3,0,96,96)}
+				{'img':'rc/worm-2.png','t':0.07,'anchor':(22,58),'rect':(96*0,0,96,96)},
+				{'img':'rc/worm-2.png','t':0.12,'anchor':(22,58),'rect':(96*1,0,96,96)},
+				{'img':'rc/worm-2.png','t':0.10,'anchor':(22,58),'rect':(96*2,0,96,96)},
+				{'img':'rc/worm-2.png','t':0.08,'anchor':(22,58),'rect':(96*3,0,96,96)}
 			]
 		}
 	)
@@ -154,8 +154,7 @@ class Worm(AnimatedGameEntity):
 
 	def setup_task(self):
 		#нормальное распределение М[],сигма
-		self.angVelocity = (random.normalvariate(0,40)) 
-		print self.angVelocity
+		self.angVelocity = (random.normalvariate(0,40))
 		self.angVelocityRad = self.angVelocity / 180 * math.pi
 		self.timer = random.random()*3+0.5
 
@@ -249,7 +248,7 @@ class Apple(SpriteGameEntity):
 		self.end_update_coordinates( )
 
 	def on_collision(self,other,nx,ny):
-		GAME_CONSOLE.write('APPLE Collision!!')
+		pass
 
 class ApManGame(Game):
 	WORLD_LEFT = -400
