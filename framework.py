@@ -191,7 +191,7 @@ GAME_CONSOLE = GameConsole( )
 class MainWindow(pyglet.window.Window):
 	def __init__(self):
 		global GAME_CONSOLE
-		pyglet.window.Window.__init__(self)
+		pyglet.window.Window.__init__(self,resizable=True)
 
 		self.init_opengl( )
 
