@@ -52,7 +52,7 @@ class GameScreen(AppScreen):
 
 		ws = float(width) / float(ApManGame.WORLD_WIDTH)
 		hs = float(height) / float(ApManGame.WORLD_HEIGHT)
-		cs = min(ws,hs)
+		cs = min(ws,hs) * 0.78
 		GAME_CONSOLE.write('Camera zoom = ',cs,'(',ws,',',hs,')')
 		self.camera.scale = cs
 
@@ -264,6 +264,7 @@ class ApManGame(Game):
 	MAX_SCORE = 10000000
 	WORLD_WIDTH = WORLD_RIGHT - WORLD_LEFT
 	WORLD_HEIGHT = WORLD_TOP - WORLD_BOTTOM
+	FRAME_IMAGE = LoadTexture('rc/frame.png','center')
 	def __init__(self,progress_bar,text_bar):
 		Game.__init__(self)
 		self.world_space = TorrWrapWorldSpace(
@@ -286,12 +287,14 @@ class ApManGame(Game):
 		self.update_progress_bar( )
 
 	def update_progress_bar(self):
-		self.progress_bar.status = math.log( 1 + math.e * self.score / ApManGame.MAX_SCORE )
+		self.progress_bar.status = math.log( 1 + math.e * self.score / ApManGame.MAX_SCORE ) ** 0.02
 		self.text_bar.setText('%d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
 
 	def draw_all(self):
 		Game.draw_all(self)
-		self.world_space.debug_draw( )
+		glEnable(GL_BLEND)
+		ApManGame.FRAME_IMAGE.blit(0,0)
+		glDisable(GL_BLEND)
 
 	def update(self,dt):
 		Game.update(self,dt)
