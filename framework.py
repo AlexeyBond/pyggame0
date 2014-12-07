@@ -465,7 +465,9 @@ class GUIImageItemLayer(GUIItemLayer):
 
 	def draw(self):
 		if self.image != None:
+			glEnable(GL_BLEND)
 			self.image.blit(x=self.rect[0],y=self.rect[1],width=self.rect[2],height=self.rect[3])
+			glDisable(GL_BLEND)
 		GUIItemLayer.draw(self)
 
 ###
