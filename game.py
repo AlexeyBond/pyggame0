@@ -33,14 +33,16 @@ class GameScreen(AppScreen):
 
 		pbar = GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30)
 		slbl = GUITextItemLayer(offset_x=-100,offset_y=10,text = '--',font_name='Courier New',font_size=36)
+		avap = GUITextItemLayer(offset_x=-100,offset_y=-10,text = '--',font_name='Courier New',font_size=36)
 
-		self.game = ApManGame(pbar,slbl)
+		self.game = ApManGame(pbar,slbl,avap)
 		self.game.unpause( )
 		self.camera = Camera( )
 
 		self.addLayer(GameWorldLayer(self.game,self.camera))
 		self.addLayer(pbar)
 		self.addLayer(slbl)
+		self.addLayer(avap)
 		GAME_CONSOLE.write('Game screen created.')
 
 		PreloadStaticSound('rc/snd/buttonclick.ogg','CLICK')
@@ -239,6 +241,7 @@ class Apple(SpriteGameEntity):
 		self.end_update_coordinates( )
 		Apple.active_list.append(self)
 		Apple.inactive_list.remove(self)
+		self.game.update_progress_bar()
 
 	def reset(self):
 		self.sprite.visible = False
@@ -247,6 +250,7 @@ class Apple(SpriteGameEntity):
 		Apple.inactive_list.append(self)
 		if self in Apple.active_list:
 			Apple.active_list.remove(self)
+		self.game.update_progress_bar()
 
 	def update(self,dt):
 		self.scale = 1.0 + 0.1 * math.sin(self.game.time)
@@ -262,16 +266,18 @@ class ApManGame(Game):
 	WORLD_BOTTOM = -400
 	SCORE_PER_APPLE = 10
 	MAX_SCORE = 10000000
+	AVALIABLE_APPLES = 5
 	WORLD_WIDTH = WORLD_RIGHT - WORLD_LEFT
 	WORLD_HEIGHT = WORLD_TOP - WORLD_BOTTOM
 	FRAME_IMAGE = LoadTexture('rc/frame.png','center')
-	def __init__(self,progress_bar,text_bar):
+	def __init__(self,progress_bar,text_bar,apples_bar):
 		Game.__init__(self)
 		self.world_space = TorrWrapWorldSpace(
 			ApManGame.WORLD_LEFT,ApManGame.WORLD_RIGHT,ApManGame.WORLD_BOTTOM,ApManGame.WORLD_TOP)
 		self.score = 0
 		self.progress_bar = progress_bar
 		self.text_bar = text_bar
+		self.apples_bar = apples_bar
 		self.init_entities( )
 		self.update_progress_bar( )
 
@@ -279,7 +285,7 @@ class ApManGame(Game):
 		self.addEntity(Worm(100,100,1))
 		self.addEntity(Worm(-100,-100,2))
 
-		for i in range(5):
+		for i in range(ApManGame.AVALIABLE_APPLES):
 			self.addEntity(Apple())
 
 	def on_apple_eat(self):
@@ -289,6 +295,7 @@ class ApManGame(Game):
 	def update_progress_bar(self):
 		self.progress_bar.status = math.log( 1 + math.e * self.score / ApManGame.MAX_SCORE ) ** 0.02
 		self.text_bar.setText('%d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
+		self.apples_bar.setText(str(len(Apple.inactive_list)))
 
 	def draw_all(self):
 		Game.draw_all(self)
@@ -331,7 +338,7 @@ class ApManGame(Game):
 		for ent in self.entities:
 			dx,dy = ent.x-x,ent.y-y
 			dist = math.sqrt(dx*dx + dy*dy)
-			if dist <= (Apple.APPLE_RADIUS + ent.radius):
+			if dist <= (Apple.APPLE_RADIUS + ent.radius) and ent.sprite.visible == True:
 				return False
 		Apple.inactive_list[0].put(x,y)
 		GAME_CONSOLE.write('Apple created')
