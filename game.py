@@ -88,9 +88,7 @@ class WormTail(AnimatedGameEntity):
 		self.radius = 0
 
 	def update(self,dt):
-		self.x,self.y = self.owner.x,self.owner.y
-		self.rotation = self.owner.rotation
-		self.end_update_coordinates( )
+		pass
 
 	def on_collision(self,other,nx,ny):
 		pass
@@ -125,6 +123,7 @@ class Worm(AnimatedGameEntity):
 		self.timer = 1
 		self.radius = Worm.WORM_HEAD_RADIUS
 		self.setup_task()
+		self.tail = WormTail(self)
 
 	def update(self, dt):
 		self.timer -= dt
@@ -135,11 +134,15 @@ class Worm(AnimatedGameEntity):
 		self.x += self.vx*dt*k
 		self.y += self.vy*dt*k
 		self.end_update_coordinates()
+		#tail update
+		self.tail.x,self.tail.y = self.x,self.y
+		self.tail.rotation = self.rotation
+		self.tail.end_update_coordinates( )
 
 	def spawn(self):
 		AnimatedGameEntity.spawn(self)
 		self.set_animation(self.id)
-		self.game.addEntity(WormTail(self),1)
+		self.game.addEntity(self.tail,1)
 
 	def velocity(self):
 		return math.sqrt(self.vx*self.vx + self.vy*self.vY)
