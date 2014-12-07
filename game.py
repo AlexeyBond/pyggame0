@@ -71,8 +71,10 @@ class GameScreen(AppScreen):
 			self.camera.focus_x += 1
 		if key == KEY.LEFT:
 			self.camera.focus_x -= 1
+
 	def on_mouse_press(self,x,y,button,modifiers):
-		print x,y,button,modifiers
+		self.game.putApple((x - self.width/2) / self.camera.scale, (y - self.height/2) / self.camera.scale)
+
 
 class WormTail(AnimatedGameEntity):
 	ANIMATION_LIST = AnimationList({
@@ -214,9 +216,10 @@ class Apple(SpriteGameEntity):
 	apple_image_2 = LoadTexture('rc/apple2.png',anchor='center')
 	inactive_list = []
 	active_list = []
+	APPLE_RADIUS = 32
 	def __init__(self):
 		SpriteGameEntity.__init__(self,sprite_image=Apple.apple_image_1)
-		self.radius = 32
+		self.radius = Apple.APPLE_RADIUS
 
 	def spawn(self):
 		SpriteGameEntity.spawn(self)
@@ -275,12 +278,8 @@ class ApManGame(Game):
 		self.addEntity(Worm(100,100,1))
 		self.addEntity(Worm(-100,-100,2))
 
-		self.addEntity(Apple())
-
-		ap = Apple( )
-		self.addEntity(ap)
-
-		ap.put(0,0)
+		for i in range(5):
+			self.addEntity(Apple())
 
 	def on_apple_eat(self):
 		self.score += ApManGame.SCORE_PER_APPLE
@@ -320,3 +319,17 @@ class ApManGame(Game):
 						ent.on_collision(ent2,dx,dy)
 						ent2.on_collision(ent,-dx,-dy)
 			ent.collision_checked = True
+
+	def putApple(self,x,y):
+		if len(Apple.inactive_list) == 0:
+			return False
+		if x > self.WORLD_RIGHT or x < self.WORLD_LEFT or y > self.WORLD_TOP or y < self.WORLD_BOTTOM:
+			return False
+		for ent in self.entities:
+			dx,dy = ent.x-x,ent.y-y
+			dist = math.sqrt(dx*dx + dy*dy)
+			if dist <= (Apple.APPLE_RADIUS + ent.radius):
+				return False
+		Apple.inactive_list[0].put(x,y)
+		GAME_CONSOLE.write('Apple created')
+		return True
