@@ -75,10 +75,10 @@ class GameScreen(AppScreen):
 class WormTail(AnimatedGameEntity):
 	ANIMATION_LIST = AnimationList({
 			0:[
-				{'img':'rc/worm-tail.png','t':0.5,'anchor':(144,96),'rect':(192*0,0,192,96)},
-				{'img':'rc/worm-tail.png','t':0.5,'anchor':(144,96),'rect':(192*1,0,192,96)},
-				{'img':'rc/worm-tail.png','t':0.5,'anchor':(144,96),'rect':(192*0,96,192,96)},
-				{'img':'rc/worm-tail.png','t':0.5,'anchor':(144,96),'rect':(192*1,96,192,96)}
+				{'img':'rc/worm-tail.png','t':0.05,'anchor':(144,96),'rect':(192*0,0,192,96)},
+				{'img':'rc/worm-tail.png','t':0.05,'anchor':(144,96),'rect':(192*1,0,192,96)},
+				{'img':'rc/worm-tail.png','t':0.05,'anchor':(144,96),'rect':(192*0,96,192,96)},
+				{'img':'rc/worm-tail.png','t':0.05,'anchor':(144,96),'rect':(192*1,96,192,96)}
 			]
 		}
 	)
@@ -98,13 +98,13 @@ class WormTail(AnimatedGameEntity):
 #один класс на двух червей
 class Worm(AnimatedGameEntity):
 	ANIMATION_LIST = AnimationList({
-			1:[
-				{'img':'rc/worm-1.png','t':0.5,'anchor':'center','rect':(96*0,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.5,'anchor':'center','rect':(96*1,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.5,'anchor':'center','rect':(96*2,0,96,96)},
-				{'img':'rc/worm-1.png','t':0.5,'anchor':'center','rect':(96*3,0,96,96)}
-			],
 			2:[
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*0,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*1,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*2,0,96,96)},
+				{'img':'rc/worm-1.png','t':0.1,'anchor':(24,52),'rect':(96*3,0,96,96)}
+			],
+			1:[
 				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*0,0,96,96)},
 				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*1,0,96,96)},
 				{'img':'rc/worm-2.png','t':0.5,'anchor':'center','rect':(96*2,0,96,96)},
@@ -123,6 +123,7 @@ class Worm(AnimatedGameEntity):
 		self.angle = 0
 		self.angVelocity = 0
 		self.timer = 1
+		self.scale = 1.2
 		self.radius = Worm.WORM_HEAD_RADIUS
 		self.setup_task()
 
