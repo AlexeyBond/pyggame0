@@ -183,15 +183,15 @@ class Worm(AnimatedGameEntity):
 		if ent.__class__.__name__ == 'Apple':
 			ent.eat(self)
 			self.eat()
-		elif ent.__class__.__name__ == 'Worm':
-			#скалярное проиведение
-			scalarMul = self.vx*ent.vx + self.vy*ent.vy
-			self.vx = self.vx - 2 * dx * scalarMul
-			self.vy = self.vy - 2 * dy * scalarMul
-			ent.vx = ent.vx - 2 * dx * scalarMul
-			ent.vy = ent.vy - 2 * dy * scalarMul
-			self.lastTurn = 0
-			ent.lastTurn = 0
+		# elif ent.__class__.__name__ == 'Worm':
+		# 	#скалярное проиведение
+		# 	scalarMul = self.vx*ent.vx + self.vy*ent.vy
+		# 	self.vx = self.vx - 2 * dx * scalarMul
+		# 	self.vy = self.vy - 2 * dy * scalarMul
+		# 	ent.vx = ent.vx - 2 * dx * scalarMul
+		# 	ent.vy = ent.vy - 2 * dy * scalarMul
+		# 	self.lastTurn = 0
+		# 	ent.lastTurn = 0
 
 	def eat(self):
 		#анимка, звук поедания яблока или надо будет переопределить для каждого червя
