@@ -713,8 +713,8 @@ class Game:
 			ent.update(dt)
 
 	# Добавление сущности в игру
-	def addEntity(self,entity):
-		self.entities.append(entity)
+	def addEntity(self,entity,position = 0):
+		self.entities.insert(len(self.entities) - position, entity)
 		entity.game = self
 		entity.spawn( )
 		if entity.id != None:
