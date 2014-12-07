@@ -71,6 +71,8 @@ class GameScreen(AppScreen):
 			self.camera.focus_x += 1
 		if key == KEY.LEFT:
 			self.camera.focus_x -= 1
+	def on_mouse_press(self,x,y,button,modifiers):
+		print x,y,button,modifiers
 
 class WormTail(AnimatedGameEntity):
 	ANIMATION_LIST = AnimationList({
@@ -154,7 +156,7 @@ class Worm(AnimatedGameEntity):
 
 	def setup_task(self):
 		#нормальное распределение М[],сигма
-		self.angVelocity = (random.normalvariate(0,40))
+		self.angVelocity = (random.normalvariate(0,60))
 		self.angVelocityRad = self.angVelocity / 180 * math.pi
 		self.timer = random.random()*3+0.5
 
