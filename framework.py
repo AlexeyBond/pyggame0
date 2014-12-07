@@ -208,7 +208,7 @@ class MainWindow(pyglet.window.Window):
 
 	# Предварительная настройка OpenGL
 	def init_opengl(self):
-		glClearColor(0.3, 0.3, 0.3, 1.0)
+		glClearColor(0.01, 0.1, 0.01, 1.0)
 
 	# Настройка матрицы проекции и вьюпорта под размеры окна
 	def setup_projection(self,width,height):
@@ -499,13 +499,22 @@ class GUIVerticalProgressBarItemLayer(GUIItemLayer):
 
 ### Слой рисующий элемент гуя-текст.
 class GUITextItemLayer(GUIItemLayer):
-	def __init__(self,offset_x,offset_y,text = '',font_name='Courier New',font_size=36):
+	def __init__(self,offset_x,offset_y,text = '',font_name='Courier New',font_size=36,bg_texture=None):
 		label = pyglet.text.Label(text,x=0,y=0,font_name=font_name,font_size=font_size)
 		GUIItemLayer.__init__(self,offset_x,offset_y,
 			label.content_width,label.content_height)
 		self.text_label = label
+		self.bg_texture = bg_texture
 
 	def draw(self):
+		if self.bg_texture != None:
+			tpoffx = 40
+			tpoffy = 10
+			tpad = -10
+			glEnable(GL_BLEND)
+			self.bg_texture.blit(x=self.rect[0]-tpoffx,y=self.rect[1]-tpoffy+tpad,
+				width=self.rect[2]+2*tpoffx,height=self.rect[3]+2*tpoffy)
+			glDisable(GL_BLEND)
 		self.text_label.draw( )
 		GUIItemLayer.draw(self)
 
@@ -640,6 +649,7 @@ def PreloadStaticSound(name,alias=None):
 
 # Проигрывает короткий звук
 def PlayStaticSound(name):
+	GAME_CONSOLE.write('Playing ',name)
 	PreloadStaticSound(name)
 	if STATIC_SOUND_SOURCES[name] != None:
 		return STATIC_SOUND_SOURCES[name].play( )

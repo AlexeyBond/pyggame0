@@ -32,7 +32,8 @@ class GameScreen(AppScreen):
 		AppScreen.__init__(self)
 
 		pbar = GUIVerticalProgressBarItemLayer(offset_x=-50,offset_y=0,height=300,width=30)
-		slbl = GUITextItemLayer(offset_x=-10,offset_y=10,text = '--',font_name='Courier New',font_size=36)
+		slbl = GUITextItemLayer(offset_x=-10,offset_y=10,text = '--',font_name='Courier New',font_size=36,
+			bg_texture=LoadTexture('rc/textbg.png'))
 		avap = GUITextItemLayer(offset_x=-100,offset_y=-24,text = '--',font_name='Courier New',font_size=36)
 
 		self.game = ApManGame(pbar,slbl,avap)
@@ -138,6 +139,7 @@ class Worm(AnimatedGameEntity):
 		k=400
 		if self.timer <= 0:
 			self.setup_task()
+			PlayStaticSound('rc/snd/ap'+str(self.id)+'.ogg')
 		self.affectAngleVelocity(dt)	
 		self.x += self.vx*dt*k
 		self.y += self.vy*dt*k
@@ -172,21 +174,6 @@ class Worm(AnimatedGameEntity):
 		self.vx, self.vy =\
 		self.vx * math.cos(drr) - self.vy * math.sin(drr),\
 		self.vx * math.sin(drr) + self.vy * math.cos(drr)
-
-
-	def turn(self, angle = 0):
-		if self.angle <= 0:
-			self.angle = random.randint(-15,15)
-			self.angVelocity = random.randint(0,angle)
-			self.angleRad = angle / 180.0 * math.pi
-			self.angVelocityRad = self.angVelocity / 180.0 * math.pi
-		self.vx, self.vy =\
-		self.vx * math.cos(self.angVelocityRad) - self.vy * math.sin(self.angVelocityRad),\
-		self.vx * math.sin(self.angVelocityRad) + self.vy * math.cos(self.angVelocityRad)
-		self.angle -= angVelocity
-		if self.angle <= 0:
-			self.lastTurn = 0
-		#self.sprite.rotate(angVelocity)
  
 	#возвращает расстояние от текущей сущности до указанной
 	def distance(self, entity):
@@ -233,10 +220,12 @@ class Apple(SpriteGameEntity):
 	def eat(self,worm):
 		if self.eaten and worm.id == 2:
 			self.game.on_apple_eat(self)
-			self.reset( ) 
+			self.reset( )
+			PlayStaticSound('rc/snd/am.ogg')
 		elif worm.id == 1 and not self.eaten:
 			self.eaten = True
 			self.sprite.image = Apple.apple_image_2
+			PlayStaticSound('rc/snd/am.ogg')
 
 	def put(self,x,y):
 		self.x,self.y = x,y
@@ -300,7 +289,7 @@ class ApManGame(Game):
 
 	def update_progress_bar(self):
 		self.progress_bar.status = math.log( 1 + math.e * self.score / ApManGame.MAX_SCORE ) ** 0.02
-		self.text_bar.setText('%9d$ of %d$'%(self.score,ApManGame.MAX_SCORE))
+		self.text_bar.setText('%9d$ of %d$ '%(self.score,ApManGame.MAX_SCORE))
 		self.apples_bar.setText(str(len(Apple.inactive_list)))
 
 	def draw_all(self):
