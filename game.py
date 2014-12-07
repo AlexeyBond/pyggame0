@@ -139,7 +139,7 @@ class Worm(AnimatedGameEntity):
 	def spawn(self):
 		AnimatedGameEntity.spawn(self)
 		self.set_animation(self.id)
-		self.game.addEntity(WormTail(self))
+		self.game.addEntity(WormTail(self),1)
 
 	def velocity(self):
 		return math.sqrt(self.vx*self.vx + self.vy*self.vY)
